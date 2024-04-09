@@ -4,7 +4,7 @@ from sqlalchemy import String, Boolean, Integer, ForeignKey, Table, Column, Doub
 
 from datetime import datetime
 
-from typing import Optional
+from typing import Optional, List
 
 from .model_base import ModelBase
 from .dominios_model import Natureza, Qualificacao, Cnaes
@@ -13,8 +13,7 @@ from .dominios_model import Natureza, Qualificacao, Cnaes
 class Empresas(ModelBase):
     __tablename__: str = 'empresas'
 
-    CNPJ: Mapped[int] = mapped_column(primary_key=True, index=True, autoincrement=True)
-    CNPJ_BASE: Mapped[str] = mapped_column(String(8), index=True)
+    CNPJ_BASE: Mapped[str] = mapped_column(String(8), primary_key=True, index=True)
     RAZAO_SOCIAL_NOME_EMPRESARIAL: Mapped[Optional[str]] = mapped_column(String(200))
     NATUREZA_JURIDICA: Mapped[Optional[str]] = mapped_column(String(4), ForeignKey('naturezas_juridicas.ID'))
     QUALIFICACAO_DO_RESPONSAVEL: Mapped[Optional[str]] = mapped_column(String(2), ForeignKey('qualificacoes_socios.ID'))
@@ -25,7 +24,9 @@ class Empresas(ModelBase):
 
     NATUREZA: Mapped[Natureza] = relationship('Natureza', lazy='joined')
     QUALIFICACAO: Mapped[Qualificacao] = relationship('Qualificacao', lazy='joined')
-
+    ESTABELECIMENTOS: Mapped[List['Estabelecimentos']] = relationship(
+        back_populates="EMPRESAS"
+    )
 
     def __repr__(self) -> str:
         return f'<Empresas>'
@@ -35,7 +36,7 @@ class Estabelecimentos(ModelBase):
     __tablename__: str = 'estabelecimentos'
 
     ID: Mapped[Optional[int]] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
-    CNPJ: Mapped[str] = mapped_column(String(14))
+    CNPJ: Mapped[str] = mapped_column(String(14), index=True, primary_key=True)
     CNPJ_BASICO: Mapped[str] = mapped_column(String(8), ForeignKey('empresas.CNPJ_BASE'))
     CNPJ_ORDEM: Mapped[Optional[str]] = mapped_column(String(4))
     CNPJ_DV: Mapped[Optional[str]] = mapped_column(String(2))
@@ -64,30 +65,38 @@ class Estabelecimentos(ModelBase):
     CORREIO_ELETRONICO: Mapped[Optional[str]] = mapped_column(String(150))
     SITUACAO_ESPECIAL: Mapped[Optional[str]] = mapped_column(String(50))
     DT_SITU_ESPECIAL: Mapped[Optional[datetime]] = mapped_column(Date)
-    # HASH: Mapped[Optional[str]] = mapped_column(String(40))
 
-    ESTABELECIMENTOS_EMPRESAS_FK: Mapped[Empresas] = relationship('Empresas', lazy='joined')
-    # ESTABELECIMENTOS_MOTIVOS_FK: Mapped[Motivos] = relationship('Motivos', lazy='joined')
+    EMPRESAS: Mapped['Empresas'] = relationship(
+        back_populates="ESTABELECIMENTOS"
+    )
+
+    FISCAL: Mapped[List['Fiscal']] = relationship(
+        back_populates='ESTABELECIMENTOS'
+    )
 
     def __repr__(self) -> str:
         return f'<Estabelecimentos>'
-    
+
 
 class Fiscal(ModelBase):
-    __tablename__: str = 'estabelecimento_cnaes'
+    __tablename__: str = 'estabelecimentos_cnae'
 
     ID: Mapped[Optional[int]] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
     CNPJ: Mapped[Optional[str]] = mapped_column(String(14), ForeignKey('estabelecimentos.CNPJ'))
     FISCAL: Mapped[Optional[str]] = mapped_column(String(7), ForeignKey('cnaes.ID'))
     PRINCIPAL: Mapped[Optional[int]] = mapped_column(BOOLEAN)
 
-    ESTABELECIMENTOS_FK: Mapped[Estabelecimentos] = relationship('Estabelecimentos', lazy='joined')
-    CNAES_FK: Mapped[Cnaes] = relationship('Cnaes', lazy='joined')
+    ESTABELECIMENTOS: Mapped['Estabelecimentos'] = relationship(
+        back_populates="FISCAL"
+    )
 
+    CNAES: Mapped[Cnaes] = relationship(
+        back_populates="FISCAL"
+    )
 
     def __repr__(self) -> str:
         return f'<Fiscal>'
-    
+
 
 class Socios(ModelBase):
     __tablename__: str = 'socios'
@@ -107,7 +116,7 @@ class Socios(ModelBase):
     FAIXA_ETARIA: Mapped[Optional[str]] = mapped_column(String(20))
     HASH: Mapped[Optional[str]] = mapped_column(String(40))
 
-    ESTABELECIMENTOS_EMPRESAS_FK: Mapped[Empresas] = relationship('Empresas', lazy='joined')
+    EMPRESAS_FK: Mapped[Empresas] = relationship('Empresas', lazy='joined')
     SOCIOS_QUALIFICACAO_FK: Mapped[Qualificacao] = relationship('Qualificacao', lazy='joined')
 
     def __repr__(self) -> str:

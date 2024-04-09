@@ -2,25 +2,26 @@ from app import app
 
 from datetime import datetime
 
-from app.servicos.read_db import read_estabelecimento_nome, read_estabelecimento_cnpj
+from app.servicos.read_db import read_empresa
+
+from typing import Literal
 
 
-@app.get("/api/v1/estabelecimentos/{tipopesquisa}/{busca}")
-async def consultar_estabelecimentos_nome(tipopesquisa, busca):
+@app.get("/api/v1/empresas/")
+async def consultar_estabelecimentos(tipopesquisa: str,
+                                     busca: str,
+                                     matriz: Literal['1', '2', None] = None,
+                                     cep: str = None,
+                                     pagina: int = 0,
+                                     uf: str = None):
 
-
-    tipos_pesquisas = {"cnpj": read_estabelecimento_cnpj(busca),
-                       "nome": read_estabelecimento_nome(busca)}
-    
-    resposta = tipos_pesquisas.get(tipopesquisa, "Tipo de pesquisa não disponível")
+    mensagem = read_empresa(tipo_busca=tipopesquisa,
+                                busca=busca,
+                                matriz=matriz,
+                                cep=cep,
+                                pagina=pagina,
+                                uf=uf)
     
     return {"datetime": datetime.now(),
-            "message": resposta,
+            "message": mensagem,
             "status": 200}
-
-
-"""
-    Razao social - empresas
-    endereços - estabelecimentos
-    por tipo - 
-"""

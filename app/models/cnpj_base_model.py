@@ -79,11 +79,11 @@ class Estabelecimentos(ModelBase):
 
 
 class Fiscal(ModelBase):
-    __tablename__: str = 'estabelecimentos_cnae'
+    __tablename__: str = 'estabelecimento_cnaes'
 
     ID: Mapped[Optional[int]] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
     CNPJ: Mapped[Optional[str]] = mapped_column(String(14), ForeignKey('estabelecimentos.CNPJ'))
-    FISCAL: Mapped[Optional[str]] = mapped_column(String(7), ForeignKey('cnaes.ID'))
+    CNAE: Mapped[Optional[str]] = mapped_column(String(7), ForeignKey('cnaes.ID'))
     PRINCIPAL: Mapped[Optional[int]] = mapped_column(BOOLEAN)
 
     ESTABELECIMENTOS: Mapped['Estabelecimentos'] = relationship(
@@ -121,3 +121,15 @@ class Socios(ModelBase):
 
     def __repr__(self) -> str:
         return f'<Socios>'
+
+
+class Nm_Estab_Empresas(ModelBase):
+    __tablename__: str = 'nm_estabele_empresas'
+
+    ID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    CNPJ_BASE: Mapped[str] = mapped_column(String(8))
+    RAZAO_SOCIAL_NOME_EMPRESARIAL: Mapped[Optional[str]] = mapped_column(String(200))
+    NM_FANTASIA:  Mapped[Optional[str]] = mapped_column(String(60))
+
+    def __repr__(self) -> str:
+        return f'<Nm_Estab_Empresas>'

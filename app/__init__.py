@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
+
 # create_tables()
 
 # auth = OAuth2PasswordBearer(tokenUrl="token")
@@ -12,5 +13,5 @@ app = FastAPI()
 
 
 
-from app.routes.estabelecimentos import *
+from app.routes.empresas import *
 from app.routes.login import *

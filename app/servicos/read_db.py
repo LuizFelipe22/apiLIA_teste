@@ -20,8 +20,9 @@ def read_empresa(cnpj: str = None,
                  uf: str = None,
                  cep: str = None,
                  pagina: int = 0,
-                 capital_social_minimo: float = 0,
-                 capital_social_maximo: float = 9_000_000_000_000_000_000,
+                 tamanho: int = 50,
+                 capital_min: float = 0,
+                 capital_max: float = 9_000_000_000_000_000_000,
                  abertura_de: date = date(1850, 1, 1),
                  abertura_ate: date = date.today(),
                  porte_empresa = None) -> dict:
@@ -35,17 +36,16 @@ def read_empresa(cnpj: str = None,
 
     pesquisa2 =[Estabelecimentos.CNPJ.like(f'{cnpj}%'),
                 match(Nm_Estab_Empresas.NM_FANTASIA, Nm_Estab_Empresas.RAZAO_SOCIAL_NOME_EMPRESARIAL, against=f'{nome}').in_natural_language_mode(),
-                Empresas.CAPITAL_SOCIAL_DA_EMPRESA.between(cleft=capital_social_minimo, cright=capital_social_maximo),
+                Empresas.CAPITAL_SOCIAL_DA_EMPRESA.between(cleft=capital_min, cright=capital_max),
                 Estabelecimentos.DT_INICIO_ATIV.between(cleft=abertura_de, cright=abertura_ate)]
 
     pesquisar = [(coluna == parametro) for parametro, coluna in zip(lista, pesquisa1) if parametro]
 
-    for i, parametro in enumerate([cnpj, nome, capital_social_minimo, abertura_de]):
+    for i, parametro in enumerate([cnpj, nome, capital_min, abertura_de]):
         if parametro:
             pesquisar.append(pesquisa2[i])
 
     resultado = {}
-    
 
     with create_session() as session:
         
@@ -55,51 +55,50 @@ def read_empresa(cnpj: str = None,
             .filter(and_(*pesquisar))
     
         quantidade = query.count()
-        minimo = 50 * pagina
-        maximo = 50 * (pagina + 1)
+        minimo = tamanho * pagina
+        maximo = tamanho * (pagina + 1)
         resultados = query.slice(minimo, maximo)
-
+        
     for estabelecimentos in resultados:
 
         fiscal = session.query(Fiscal).filter(Fiscal.CNPJ == estabelecimentos.CNPJ).all()
 
-        cnae_fiscal_principal = [str(item.CNAES) for item in fiscal if item.PRINCIPAL == 1]
-
-        cnae_fiscal_secundaria = [str(item.CNAES) for item in fiscal if item.PRINCIPAL == 0]
+        cnae_fiscal_principal = [str(item.CNAE) for item in fiscal if item.PRINCIPAL == 1]
+        cnae_fiscal_secundaria = [str(item.CNAE) for item in fiscal if item.PRINCIPAL == 0]
 
 
         estabelecimento = {"id": estabelecimentos.ID,
-                            "cnpj": estabelecimentos.CNPJ,
-                            "cnpj_basico": estabelecimentos.CNPJ_BASICO,
-                            "cnpj_ordem": estabelecimentos.CNPJ_ORDEM, 
-                            "cnpj_dv": estabelecimentos.CNPJ_DV,
-                            "identificador_matriz_filial": estabelecimentos.ID_MATRIZ_FILIAL,
-                            "nome_fantasia": estabelecimentos.NM_FANTASIA,
-                            "situacao_cadastral": estabelecimentos.SITU_CADASTRAL,
-                            "data_situacao_cadastral": str(estabelecimentos.DT_SITU_CADASTRAL) if estabelecimentos.DT_SITU_CADASTRAL else None,
-                            "motivo_situacao_cadastral": estabelecimentos.MT_SITU_CADASTRAL,
-                            "nome_da_cidade_no_exterior": estabelecimentos.CIDADE_EXTERIOR,
-                            "pais": estabelecimentos.PAIS,
-                            "data_de_inicio_atividade": str(estabelecimentos.DT_INICIO_ATIV) if estabelecimentos.DT_INICIO_ATIV else None,
-                            "cnae_fiscal_principal": cnae_fiscal_principal,
-                            "cnae_fiscal_secundaria": cnae_fiscal_secundaria,
-                            "tipo_de_logradouro": estabelecimentos.TP_LOGRADOURO,
-                            "logradouro": estabelecimentos.LOGRADOURO,
-                            "numero": estabelecimentos.NUMERO,
-                            "complemento": estabelecimentos.COMPLEMENTO,
-                            "bairro": estabelecimentos.BAIRRO,
-                            "cep": estabelecimentos.CEP,
-                            "uf": estabelecimentos.UF,
-                            "municipio": estabelecimentos.MUNICIPIO,
-                            "ddd1": estabelecimentos.DDD1,
-                            "telefone1": estabelecimentos.TELEFONE1,
-                            "ddd2": estabelecimentos.DDD2,
-                            "telefone2": estabelecimentos.TELEFONE2,
-                            "ddd_do_fax": estabelecimentos.DDD_FAX,
-                            "fax": estabelecimentos.FAX,
-                            "correio_eletronico": estabelecimentos.CORREIO_ELETRONICO,
-                            "situacao_especial": estabelecimentos.SITUACAO_ESPECIAL,
-                            "data_da_situacao_especial": str(estabelecimentos.DT_SITU_ESPECIAL) if estabelecimentos.DT_SITU_ESPECIAL else None}
+                           "cnpj": estabelecimentos.CNPJ,
+                           "cnpj_basico": estabelecimentos.CNPJ_BASICO,
+                           "cnpj_ordem": estabelecimentos.CNPJ_ORDEM, 
+                           "cnpj_dv": estabelecimentos.CNPJ_DV,
+                           "identificador_matriz_filial": estabelecimentos.ID_MATRIZ_FILIAL,
+                           "nome_fantasia": estabelecimentos.NM_FANTASIA,
+                           "situacao_cadastral": estabelecimentos.SITU_CADASTRAL,
+                           "data_situacao_cadastral": str(estabelecimentos.DT_SITU_CADASTRAL) if estabelecimentos.DT_SITU_CADASTRAL else None,
+                           "motivo_situacao_cadastral": estabelecimentos.MT_SITU_CADASTRAL,
+                           "nome_da_cidade_no_exterior": estabelecimentos.CIDADE_EXTERIOR,
+                           "pais": estabelecimentos.PAIS,
+                           "data_de_inicio_atividade": str(estabelecimentos.DT_INICIO_ATIV) if estabelecimentos.DT_INICIO_ATIV else None,
+                           "cnae_fiscal_principal": cnae_fiscal_principal,
+                           "cnae_fiscal_secundaria": cnae_fiscal_secundaria,
+                           "tipo_de_logradouro": estabelecimentos.TP_LOGRADOURO,
+                           "logradouro": estabelecimentos.LOGRADOURO,
+                           "numero": estabelecimentos.NUMERO,
+                           "complemento": estabelecimentos.COMPLEMENTO,
+                           "bairro": estabelecimentos.BAIRRO,
+                           "cep": estabelecimentos.CEP,
+                           "uf": estabelecimentos.UF,
+                           "municipio": estabelecimentos.MUNICIPIO,
+                           "ddd1": estabelecimentos.DDD1,
+                           "telefone1": estabelecimentos.TELEFONE1,
+                           "ddd2": estabelecimentos.DDD2,
+                           "telefone2": estabelecimentos.TELEFONE2,
+                           "ddd_do_fax": estabelecimentos.DDD_FAX,
+                           "fax": estabelecimentos.FAX,
+                           "correio_eletronico": estabelecimentos.CORREIO_ELETRONICO,
+                           "situacao_especial": estabelecimentos.SITUACAO_ESPECIAL,
+                           "data_da_situacao_especial": str(estabelecimentos.DT_SITU_ESPECIAL) if estabelecimentos.DT_SITU_ESPECIAL else None}
         
         empresa = {"cnpj_base": estabelecimentos.EMPRESAS.CNPJ_BASE,
                     "razao_social_nome_empresarial": estabelecimentos.EMPRESAS.RAZAO_SOCIAL_NOME_EMPRESARIAL,
@@ -118,12 +117,11 @@ def read_empresa(cnpj: str = None,
 
     return {"resposta": [valor for _, valor in resultado.items()],
             "total_registros": quantidade,
-            "pagina": pagina + 1,
+            "pagina": pagina,
             "max_paginas": ceil(quantidade / 50)}
 
 
 def read_estabelecimentos_por_tipo(busca_tipo: str):
-
 
     with create_session() as session:
         tipos = session.query(Tipos).filter(Tipos.tipo == busca_tipo)
@@ -132,7 +130,16 @@ def read_estabelecimentos_por_tipo(busca_tipo: str):
 
     return lista_cnaes
 
-        
+
+def procurar_lugar():
+    pass
+    # 1 - Consultar no banco na tabela de cluster o estado e a cidade que desejamos colocar o estabelecimento
+    #   - Retornar todos os cluster ques estão naquela cidade
+    #   - Fazer um JOIN usando o campo 'cep' na tabela estabelecimentos para pegar as empresas que estão naquele local, outro JOIN na tabela tipos para saber que tipo é essa empresa
+
+    # - Consulta reversa para pegar alguns exemplos de cluster que possue atributos parecidos
+     
+    # 2 - Fazer um groupby nas colunas cluster e tipos
 
             
                 

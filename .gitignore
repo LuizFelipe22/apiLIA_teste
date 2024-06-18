@@ -5,3 +5,5 @@ arquivos/
 
 teste.ipynb
 env/
+*.json
+*.txt

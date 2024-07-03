@@ -1,11 +1,11 @@
 from app.bd.conexao_bd import create_session
 
 from app.models.cnpj_base_model import Estabelecimentos, Fiscal, Empresas, Nm_Estab_Empresas
-from app.models.dominios_model import Cnaes, Tipos
+from app.models.dominios_model import TiposCnaes, Tipos, Cluster
 
 from sqlalchemy.dialects.mysql import match
 
-from sqlalchemy import and_, text
+from sqlalchemy import and_, func
 
 from math import ceil
 
@@ -45,7 +45,7 @@ def read_empresa(cnpj: str = None,
         if parametro:
             pesquisar.append(pesquisa2[i])
 
-    resultado = {}
+    resultado = []
 
     with create_session() as session:
         
@@ -69,7 +69,14 @@ def read_empresa(cnpj: str = None,
 
         estabelecimento = {"id": estabelecimentos.ID,
                            "cnpj": estabelecimentos.CNPJ,
-                           "cnpj_basico": estabelecimentos.CNPJ_BASICO,
+                           "cnpj_base": estabelecimentos.EMPRESAS.CNPJ_BASE,
+                           "razao_social_nome_empresarial": estabelecimentos.EMPRESAS.RAZAO_SOCIAL_NOME_EMPRESARIAL,
+                           "natureza_juridica": estabelecimentos.EMPRESAS.NATUREZA_JURIDICA,
+                           "qualificacao_responsavel": estabelecimentos.EMPRESAS.QUALIFICACAO_DO_RESPONSAVEL,
+                           "capital_social": estabelecimentos.EMPRESAS.CAPITAL_SOCIAL_DA_EMPRESA,
+                           "porte_empresa": estabelecimentos.EMPRESAS.PORTE_EMPRESA,
+                           "ente_federativo_responsavel": estabelecimentos.EMPRESAS.ENTE_FEDERATIVO_RESPONSAVEL,
+                        #    "cnpj_basico": estabelecimentos.CNPJ_BASICO,
                            "cnpj_ordem": estabelecimentos.CNPJ_ORDEM, 
                            "cnpj_dv": estabelecimentos.CNPJ_DV,
                            "identificador_matriz_filial": estabelecimentos.ID_MATRIZ_FILIAL,
@@ -100,22 +107,23 @@ def read_empresa(cnpj: str = None,
                            "situacao_especial": estabelecimentos.SITUACAO_ESPECIAL,
                            "data_da_situacao_especial": str(estabelecimentos.DT_SITU_ESPECIAL) if estabelecimentos.DT_SITU_ESPECIAL else None}
         
-        empresa = {"cnpj_base": estabelecimentos.EMPRESAS.CNPJ_BASE,
-                    "razao_social_nome_empresarial": estabelecimentos.EMPRESAS.RAZAO_SOCIAL_NOME_EMPRESARIAL,
-                    "natureza_juridica": estabelecimentos.EMPRESAS.NATUREZA_JURIDICA,
-                    "qualificacao_responsavel": estabelecimentos.EMPRESAS.QUALIFICACAO_DO_RESPONSAVEL,
-                    "capital_social": estabelecimentos.EMPRESAS.CAPITAL_SOCIAL_DA_EMPRESA,
-                    "porte_empresa": estabelecimentos.EMPRESAS.PORTE_EMPRESA,
-                    "ente_federativo_responsavel": estabelecimentos.EMPRESAS.ENTE_FEDERATIVO_RESPONSAVEL}
+        # empresa = {"cnpj_base": estabelecimentos.EMPRESAS.CNPJ_BASE,
+        #             "razao_social_nome_empresarial": estabelecimentos.EMPRESAS.RAZAO_SOCIAL_NOME_EMPRESARIAL,
+        #             "natureza_juridica": estabelecimentos.EMPRESAS.NATUREZA_JURIDICA,
+        #             "qualificacao_responsavel": estabelecimentos.EMPRESAS.QUALIFICACAO_DO_RESPONSAVEL,
+        #             "capital_social": estabelecimentos.EMPRESAS.CAPITAL_SOCIAL_DA_EMPRESA,
+        #             "porte_empresa": estabelecimentos.EMPRESAS.PORTE_EMPRESA,
+        #             "ente_federativo_responsavel": estabelecimentos.EMPRESAS.ENTE_FEDERATIVO_RESPONSAVEL}
         
-        try:
-            resultado[estabelecimentos.EMPRESAS.CNPJ_BASE]['filial'].append(estabelecimento)
-        except KeyError:
-            empresa['filial'] = [estabelecimento]
-            resultado[estabelecimentos.EMPRESAS.CNPJ_BASE] = empresa
+        # try:
+        #     resultado[estabelecimentos.EMPRESAS.CNPJ_BASE]['filial'].append(estabelecimento)
+        # except KeyError:
+        #     empresa['filial'] = [estabelecimento]
+        #     resultado[estabelecimentos.EMPRESAS.CNPJ_BASE] = empresa
+        resultado.append(estabelecimento)
 
 
-    return {"resposta": [valor for _, valor in resultado.items()],
+    return {"resposta": resultado, # [valor for _, valor in resultado.items()],
             "total_registros": quantidade,
             "pagina": pagina,
             "max_paginas": ceil(quantidade / 50)}
@@ -131,8 +139,29 @@ def read_estabelecimentos_por_tipo(busca_tipo: str):
     return lista_cnaes
 
 
-def procurar_lugar():
-    pass
+def procurar_lugar(estado: str, cidade: str) -> list:
+    with create_session() as session:
+        consulta = session.query(Cluster.cluster, Tipos.tipo, func.count().label('quantidade')) \
+                .join(Estabelecimentos, Estabelecimentos.CEP == Cluster.cep) \
+                .join(Fiscal, Estabelecimentos.CNPJ == Fiscal.CNPJ) \
+                .join(TiposCnaes, TiposCnaes.cnaes == Fiscal.CNAE) \
+                .join(Tipos, Tipos.id == TiposCnaes.id_tipos) \
+                .filter(Estabelecimentos.UF == estado, Estabelecimentos.MUNICIPIO == cidade, Fiscal.PRINCIPAL == 1) \
+                .group_by(Cluster.cluster, Tipos.tipo) \
+                .order_by(func.count().desc()) \
+                .distinct()
+    
+    return consulta.all()
+
+
+def read_clusters(clusters: list):
+    with create_session() as session:
+        consulta = session.query(Cluster.cluster, Cluster.lat, Cluster.lon, Cluster.bairro, Cluster.uf, Cluster.localidade) \
+                   .filter(Cluster.cluster.in_(clusters)).distinct()
+        
+    return consulta.all()
+
+        
     # 1 - Consultar no banco na tabela de cluster o estado e a cidade que desejamos colocar o estabelecimento
     #   - Retornar todos os cluster ques estão naquela cidade
     #   - Fazer um JOIN usando o campo 'cep' na tabela estabelecimentos para pegar as empresas que estão naquele local, outro JOIN na tabela tipos para saber que tipo é essa empresa

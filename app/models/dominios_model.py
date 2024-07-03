@@ -87,3 +87,20 @@ class TiposCnaes(ModelBase):
 
     def __repr__(self) -> str:
         return f'<TiposCnaes>'
+    
+
+class Cluster(ModelBase):
+    __tablename__: str = 'cluster'
+
+    index: int = sa.Column(sa.Integer, primary_key=True)
+    uf: str = sa.Column(sa.CHAR(2))
+    localidade: str = sa.Column(sa.VARCHAR(50))
+    logradouroDNEC: str = sa.Column(sa.Text)
+    bairro: str = sa.Column(sa.VARCHAR(75))
+    cep: str = sa.Column(sa.CHAR(8))
+    lat: float = sa.Column(sa.DOUBLE)
+    lon: float = sa.Column(sa.DOUBLE)
+    cluster: int = sa.Column(sa.Integer)
+
+    def __repr__(self) -> str:
+        return f'<Cluster>'

@@ -15,3 +15,4 @@ app = FastAPI()
 
 from app.routes.empresas import *
 from app.routes.login import *
+from app.routes.sugestao_empresas import segerir_abertura_empresa

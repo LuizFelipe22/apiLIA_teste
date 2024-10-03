@@ -2,6 +2,12 @@ import sqlalchemy as sa
 
 from .model_base import ModelBase
 
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from sqlalchemy import ForeignKey
+
+from typing import List
+
 
 class Natureza(ModelBase):
     __tablename__: str = 'naturezas_juridicas'
@@ -29,6 +35,14 @@ class Cnaes(ModelBase):
     ID: str = sa.Column(sa.CHAR(7), primary_key=True, index=True)
     DESCRICAO: str = sa.Column(sa.String(150), nullable=False)
 
+    FISCAL: Mapped[List['Fiscal']] = relationship(
+        back_populates="CNAES"
+    )
+
+    Tipos_Cnaes: Mapped[List['TiposCnaes']] = relationship(
+        back_populates="CNAES"
+    )
+
     def __repr__(self) -> str:
         return f'<Cnaes>'
     
@@ -43,11 +57,50 @@ class Motivos(ModelBase):
         return f'<Motivos>'
     
 
-# class Paises(ModelBase):
-#     __tablename__: str = ''
+class Tipos(ModelBase):
+    __tablename__: str = 'tipos'
 
-#     ID: str = sa.Column(sa.CHAR(3), primary_key=True, index=True)
-#     DESCRICAO: str = sa.Column(sa.String(30), nullable=False)
+    id: str = sa.Column(sa.Integer, primary_key=True, index=True)
+    tipo: str = sa.Column(sa.String(60))
 
-#     def __repr__(self) -> str:
-#         return f'<Paises>'
+    Tipos_Cnaes: Mapped[List['TiposCnaes']] = relationship(
+        back_populates="TIPOS"
+    )
+
+    def __repr__(self) -> str:
+        return f'<Tipos>'
+    
+
+class TiposCnaes(ModelBase):
+    __tablename__: str = 'tipos_cnaes'
+
+    id_tipos: str = sa.Column(sa.Integer, ForeignKey('tipos.id'), primary_key=True)
+    cnaes: str = sa.Column(sa.CHAR(7), ForeignKey('cnaes.ID'), primary_key=True)
+
+    CNAES: Mapped['Cnaes'] = relationship(
+        back_populates="Tipos_Cnaes"
+    )
+
+    TIPOS: Mapped['Tipos'] = relationship(
+        back_populates="Tipos_Cnaes"
+    )
+
+    def __repr__(self) -> str:
+        return f'<TiposCnaes>'
+    
+
+class Cluster(ModelBase):
+    __tablename__: str = 'cluster'
+
+    index: int = sa.Column(sa.Integer, primary_key=True)
+    uf: str = sa.Column(sa.CHAR(2))
+    localidade: str = sa.Column(sa.VARCHAR(50))
+    logradouroDNEC: str = sa.Column(sa.Text)
+    bairro: str = sa.Column(sa.VARCHAR(75))
+    cep: str = sa.Column(sa.CHAR(8))
+    lat: float = sa.Column(sa.DOUBLE)
+    lon: float = sa.Column(sa.DOUBLE)
+    cluster: int = sa.Column(sa.Integer)
+
+    def __repr__(self) -> str:
+        return f'<Cluster>'

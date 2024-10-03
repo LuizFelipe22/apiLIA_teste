@@ -1,2 +1,11 @@
 venv/
 __pycache__
+arquivos/
+
+teste.ipynb
+env/
+*.json
+*.txt]
+bugs.ipynb
+tipos_empresas.txt
+backup

@@ -12,8 +12,8 @@ from typing import List
 class Natureza(ModelBase):
     __tablename__: str = 'naturezas_juridicas'
 
-    ID: str = sa.Column(sa.CHAR(4), primary_key=True, index=True)
-    DESCRICAO: str = sa.Column(sa.String(90), nullable=False)
+    id: str = sa.Column(sa.CHAR(4), primary_key=True, index=True)
+    descricao: str = sa.Column(sa.String(90), nullable=False)
 
     def __repr__(self) -> str:
         return f'<Natureza>'
@@ -22,8 +22,8 @@ class Natureza(ModelBase):
 class Qualificacao(ModelBase):
     __tablename__: str = 'qualificacoes_socios'
 
-    ID: str = sa.Column(sa.CHAR(2), primary_key=True, index=True)
-    DESCRICAO: str = sa.Column(sa.String(90), nullable=False)
+    id: str = sa.Column(sa.CHAR(2), primary_key=True, index=True)
+    descricao: str = sa.Column(sa.String(90), nullable=False)
 
     def __repr__(self) -> str:
         return f'<Qualificacao>'
@@ -32,15 +32,15 @@ class Qualificacao(ModelBase):
 class Cnaes(ModelBase):
     __tablename__: str = 'cnaes'
 
-    ID: str = sa.Column(sa.CHAR(7), primary_key=True, index=True)
-    DESCRICAO: str = sa.Column(sa.String(150), nullable=False)
+    id: str = sa.Column(sa.CHAR(7), primary_key=True, index=True)
+    descricao: str = sa.Column(sa.String(150), nullable=False)
 
-    FISCAL: Mapped[List['Fiscal']] = relationship(
-        back_populates="CNAES"
+    fiscal: Mapped[List['Fiscal']] = relationship(
+        back_populates="cnaes"
     )
 
-    Tipos_Cnaes: Mapped[List['TiposCnaes']] = relationship(
-        back_populates="CNAES"
+    tipos_cnaes: Mapped[List['TiposCnaes']] = relationship(
+        back_populates="cnaes"
     )
 
     def __repr__(self) -> str:
@@ -50,8 +50,8 @@ class Cnaes(ModelBase):
 class Motivos(ModelBase):
     __tablename__: str = 'motivos_situacao_empresa'
 
-    ID: str = sa.Column(sa.CHAR(2), primary_key=True, index=True)
-    DESCRICAO: str = sa.Column(sa.String(40), nullable=False)
+    id: str = sa.Column(sa.CHAR(2), primary_key=True, index=True)
+    descricao: str = sa.Column(sa.String(40), nullable=False)
 
     def __repr__(self) -> str:
         return f'<Motivos>'
@@ -63,8 +63,8 @@ class Tipos(ModelBase):
     id: str = sa.Column(sa.Integer, primary_key=True, index=True)
     tipo: str = sa.Column(sa.String(60))
 
-    Tipos_Cnaes: Mapped[List['TiposCnaes']] = relationship(
-        back_populates="TIPOS"
+    tipos_cnaes: Mapped[List['TiposCnaes']] = relationship(
+        back_populates="tipos"
     )
 
     def __repr__(self) -> str:
@@ -75,14 +75,14 @@ class TiposCnaes(ModelBase):
     __tablename__: str = 'tipos_cnaes'
 
     id_tipos: str = sa.Column(sa.Integer, ForeignKey('tipos.id'), primary_key=True)
-    cnaes: str = sa.Column(sa.CHAR(7), ForeignKey('cnaes.ID'), primary_key=True)
+    cnaes: str = sa.Column(sa.CHAR(7), ForeignKey('cnaes.id'), primary_key=True)
 
-    CNAES: Mapped['Cnaes'] = relationship(
-        back_populates="Tipos_Cnaes"
+    cnaes: Mapped['Cnaes'] = relationship(
+        back_populates="tipos_cnaes"
     )
 
-    TIPOS: Mapped['Tipos'] = relationship(
-        back_populates="Tipos_Cnaes"
+    tipos: Mapped['Tipos'] = relationship(
+        back_populates="tipos_cnaes"
     )
 
     def __repr__(self) -> str:
